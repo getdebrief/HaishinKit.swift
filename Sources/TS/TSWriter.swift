@@ -117,7 +117,6 @@ public class TSWriter: Running {
             guard videoTimestamp == .invalid || videoTimestamp == .zero else { break }
             videoTimestamp = presentationTimeStamp
             // NOTE: Set the audio timestamp back to invalid so it will set it properly to now.
-            audioTimestamp = .invalid
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
             }
@@ -142,7 +141,7 @@ public class TSWriter: Running {
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
 
-        if PCRTimestamp == .zero || PCRTimestamp == .invalid || videoTimestamp == .invalid {
+        if PCRTimestamp == .invalid || videoTimestamp == .invalid {
             return
         }
 
