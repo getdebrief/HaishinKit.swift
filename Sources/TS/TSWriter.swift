@@ -141,10 +141,10 @@ public class TSWriter: Running {
 
         logger.info("Creating packet for PID = \(PID) and pts = \(presentationTimeStamp) and dts = \(decodeTimeStamp)")
 
-//        if PCRTimestamp == .zero {
-//            logger.info("Returning because pcr timestamp is invalid.")
-//            return
-//        }
+        if PCRTimestamp == .zero || PCRTimestamp == .invalid {
+            logger.info("Returning because pcr timestamp is invalid.")
+            return
+        }
 
         rotateFileHandle(timestamp)
 
