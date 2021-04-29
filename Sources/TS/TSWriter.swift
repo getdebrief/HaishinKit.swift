@@ -139,10 +139,12 @@ public class TSWriter: Running {
         let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
-        if PCRTimestamp == .zero {
-            logger.info("Returning because pcr timestamp is invalid.")
-            return
-        }
+        logger.info("Creating packet for PID = \(PID) and pts = \(presentationTimeStamp) and dts = \(decodeTimeStamp)")
+
+//        if PCRTimestamp == .zero {
+//            logger.info("Returning because pcr timestamp is invalid.")
+//            return
+//        }
 
         rotateFileHandle(timestamp)
 
@@ -204,7 +206,7 @@ public class TSWriter: Running {
     private func split(_ PID: UInt16, PES: PacketizedElementaryStream, timestamp: CMTime) -> [TSPacket] {
         var PCR: UInt64?
         let duration: Double = timestamp.seconds - PCRTimestamp.seconds
-        if PCRPID == PID && (PCRTimestamp == CMTime.zero || 0.02 <= duration) {
+        if PCRPID == PID && 0.02 <= duration {
             PCR = UInt64((timestamp.seconds - (PID == TSWriter.defaultVideoPID ? videoTimestamp : audioTimestamp).seconds) * TSTimestamp.resolution)
             PCRTimestamp = timestamp
             logger.info("updating pcr timestamp to \(timestamp)")
