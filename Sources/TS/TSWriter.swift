@@ -80,6 +80,8 @@ public class TSWriter: Running {
             return
         }
 
+        videoInitialized = false
+
         isRunning.mutate { $0 = true }
     }
 
