@@ -143,6 +143,9 @@ public class TSWriter: Running {
 
         let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
+
+        logger.info("PCR timestamp: \(PCRTimestamp)")
+
         rotateFileHandle(timestamp)
 
         packets[0].adaptationField?.randomAccessIndicator = randomAccessIndicator
@@ -206,6 +209,7 @@ public class TSWriter: Running {
         if PCRPID == PID && 0.02 <= duration {
             PCR = UInt64((timestamp.seconds - (PID == TSWriter.defaultVideoPID ? videoTimestamp : audioTimestamp).seconds) * TSTimestamp.resolution)
             PCRTimestamp = timestamp
+            logger.info("updating pcr timestamp to \(timestamp)")
         }
         var packets: [TSPacket] = []
         for packet in PES.arrayOfPackets(PID, PCR: PCR) {
