@@ -206,7 +206,7 @@ public class TSWriter: Running {
     private func split(_ PID: UInt16, PES: PacketizedElementaryStream, timestamp: CMTime) -> [TSPacket] {
         var PCR: UInt64?
         let duration: Double = timestamp.seconds - PCRTimestamp.seconds
-        if PCRTimestamp == CMTime.zero || (PCRPID == PID && 0.02 <= duration) {
+        if PCRPID == PID && (PCRTimestamp == CMTime.zero || 0.02 <= duration) {
             PCR = UInt64((timestamp.seconds - (PID == TSWriter.defaultVideoPID ? videoTimestamp : audioTimestamp).seconds) * TSTimestamp.resolution)
             PCRTimestamp = timestamp
             logger.info("updating pcr timestamp to \(timestamp)")
