@@ -280,14 +280,14 @@ extension TSWriter: VideoEncoderDelegate {
 
 public protocol TSFileWriterDelegate: AnyObject {
     func didStartWritingToFile(at: URL)
-    func didFinishWritingToFile(at: URL)
+    func didFinishWritingToFile(at: URL, duration: Double)
 }
 
 public class TSFileWriter: TSWriter {
     static let defaultSegmentCount: Int = 3
-    static let defaultSegmentMaxCount: Int = 12
+    public static let defaultSegmentMaxCount: Int = 12
 
-    var segmentMaxCount: Int = TSFileWriter.defaultSegmentMaxCount
+    public var segmentMaxCount: Int = TSFileWriter.defaultSegmentMaxCount
     private(set) var files: [M3UMediaInfo] = []
     private var currentFileHandle: FileHandle?
     private var currentFileURL: URL?
@@ -297,7 +297,7 @@ public class TSFileWriter: TSWriter {
 
     public weak var fileDelegate: TSFileWriterDelegate?
 
-    public override init(segmentDuration: Double = TSWriter.defaultSegmentDuration) {
+    public init(segmentDuration: Double = TSWriter.defaultSegmentDuration, segmentMaxCount: Int = TSFileWriter.defaultSegmentMaxCount) {
         #if os(OSX)
         let bundleIdentifier: String? = Bundle.main.bundleIdentifier
         let temp: String = bundleIdentifier == nil ? NSTemporaryDirectory() : NSTemporaryDirectory() + bundleIdentifier! + "/"
@@ -305,6 +305,8 @@ public class TSFileWriter: TSWriter {
         let temp: String = NSTemporaryDirectory()
         #endif
         self.fileDirectory = URL(fileURLWithPath: temp, isDirectory: true)
+
+        self.segmentMaxCount = segmentMaxCount
 
         super.init(segmentDuration: segmentDuration)
     }
@@ -318,7 +320,7 @@ public class TSFileWriter: TSWriter {
     var playlist: String {
         var m3u8 = M3U()
         m3u8.targetDuration = segmentDuration
-        if sequence <= TSFileWriter.defaultSegmentMaxCount {
+        if sequence <= segmentMaxCount {
             m3u8.mediaSequence = 0
             m3u8.mediaList = files
             for mediaItem in m3u8.mediaList where mediaItem.duration > m3u8.targetDuration {
@@ -326,8 +328,8 @@ public class TSFileWriter: TSWriter {
             }
             return m3u8.description
         }
-        let startIndex = max(0, files.count - TSFileWriter.defaultSegmentCount)
-        m3u8.mediaSequence = sequence - TSFileWriter.defaultSegmentMaxCount
+        let startIndex = max(0, files.count - segmentMaxCount)
+        m3u8.mediaSequence = max(0, sequence - segmentMaxCount)
         m3u8.mediaList = Array(files[startIndex..<files.count])
         for mediaItem in m3u8.mediaList where mediaItem.duration > m3u8.targetDuration {
             m3u8.targetDuration = mediaItem.duration + 1
@@ -355,12 +357,12 @@ public class TSFileWriter: TSWriter {
 
         if let currentFileURL: URL = currentFileURL {
             files.append(M3UMediaInfo(url: currentFileURL, duration: duration))
-            self.fileDelegate?.didFinishWritingToFile(at: currentFileURL)
+            self.fileDelegate?.didFinishWritingToFile(at: currentFileURL, duration: duration)
             sequence += 1
         }
 
         fileManager.createFile(atPath: url.path, contents: nil, attributes: nil)
-        if TSFileWriter.defaultSegmentMaxCount <= files.count {
+        if segmentMaxCount <= files.count {
             let info: M3UMediaInfo = files.removeFirst()
             do {
                 try fileManager.removeItem(at: info.url as URL)
