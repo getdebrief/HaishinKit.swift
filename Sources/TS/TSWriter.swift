@@ -108,7 +108,6 @@ public class TSWriter: Running {
 
         switch PID {
         case TSWriter.defaultAudioPID:
-            guard expectedMedias.contains(.video) && videoTimestamp != .invalid else { return }
             guard audioTimestamp == .invalid else { break }
             audioTimestamp = presentationTimeStamp
             if PCRPID == PID {
