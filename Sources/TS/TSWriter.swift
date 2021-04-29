@@ -116,6 +116,8 @@ public class TSWriter: Running {
         case TSWriter.defaultVideoPID:
             guard videoTimestamp == .invalid || videoTimestamp == .zero else { break }
             videoTimestamp = presentationTimeStamp
+            // NOTE: Set the audio timestamp back to invalid so it will set it properly to now.
+            audioTimestamp = .invalid
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
             }
