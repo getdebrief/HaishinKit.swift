@@ -123,11 +123,6 @@ public class TSWriter: Running {
             break
         }
 
-        guard PCRTimestamp != .invalid else {
-            logger.info("Returning because pcr timestamp is invalid.")
-            return
-        }
-
         guard var PES = PacketizedElementaryStream.create(
             bytes,
             count: count,
@@ -144,7 +139,10 @@ public class TSWriter: Running {
         let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
-        logger.info("PCR timestamp: \(PCRTimestamp)")
+        if PCRTimestamp == .zero {
+            logger.info("Returning because pcr timestamp is invalid.")
+            return
+        }
 
         rotateFileHandle(timestamp)
 
