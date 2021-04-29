@@ -108,13 +108,13 @@ public class TSWriter: Running {
 
         switch PID {
         case TSWriter.defaultAudioPID:
-            guard audioTimestamp == .invalid else { break }
+            guard audioTimestamp == .invalid || audioTimestamp == .zero else { break }
             audioTimestamp = presentationTimeStamp
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
             }
         case TSWriter.defaultVideoPID:
-            guard videoTimestamp == .invalid else { break }
+            guard videoTimestamp == .invalid || videoTimestamp == .zero else { break }
             videoTimestamp = presentationTimeStamp
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
