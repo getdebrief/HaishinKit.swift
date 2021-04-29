@@ -139,10 +139,8 @@ public class TSWriter: Running {
         let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
-        logger.info("Creating packet for PID = \(PID) and pts = \(presentationTimeStamp) and dts = \(decodeTimeStamp)")
 
         if PCRTimestamp == .zero || PCRTimestamp == .invalid {
-            logger.info("Returning because pcr timestamp is invalid.")
             return
         }
 
@@ -209,7 +207,6 @@ public class TSWriter: Running {
         if PCRPID == PID && 0.02 <= duration {
             PCR = UInt64((timestamp.seconds - (PID == TSWriter.defaultVideoPID ? videoTimestamp : audioTimestamp).seconds) * TSTimestamp.resolution)
             PCRTimestamp = timestamp
-            logger.info("updating pcr timestamp to \(timestamp)")
         }
         var packets: [TSPacket] = []
         for packet in PES.arrayOfPackets(PID, PCR: PCR) {
@@ -349,7 +346,6 @@ public class TSFileWriter: TSWriter {
     }
 
     override func rotateFileHandle(_ timestamp: CMTime) {
-        logger.info("Timestamp: \(timestamp) and rotated: \(rotatedTimestamp)")
         let duration: Double = timestamp.seconds - rotatedTimestamp.seconds
         if duration <= segmentDuration {
             return
