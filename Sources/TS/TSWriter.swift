@@ -349,6 +349,7 @@ public class TSFileWriter: TSWriter {
     }
 
     override func rotateFileHandle(_ timestamp: CMTime) {
+        logger.info("Timestamp: \(timestamp) and rotated: \(rotatedTimestamp)")
         let duration: Double = timestamp.seconds - rotatedTimestamp.seconds
         if duration <= segmentDuration {
             return
