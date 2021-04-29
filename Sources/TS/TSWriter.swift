@@ -140,7 +140,7 @@ public class TSWriter: Running {
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
 
-        if PCRTimestamp == .zero || PCRTimestamp == .invalid {
+        if PCRTimestamp == .zero || PCRTimestamp == .invalid || videoTimestamp == .invalid {
             return
         }
 
