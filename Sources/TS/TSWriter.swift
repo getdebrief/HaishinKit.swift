@@ -297,7 +297,7 @@ public class TSFileWriter: TSWriter {
 
     public weak var fileDelegate: TSFileWriterDelegate?
 
-    override init(segmentDuration: Double = TSWriter.defaultSegmentDuration) {
+    public override init(segmentDuration: Double = TSWriter.defaultSegmentDuration) {
         #if os(OSX)
         let bundleIdentifier: String? = Bundle.main.bundleIdentifier
         let temp: String = bundleIdentifier == nil ? NSTemporaryDirectory() : NSTemporaryDirectory() + bundleIdentifier! + "/"
@@ -309,7 +309,7 @@ public class TSFileWriter: TSWriter {
         super.init(segmentDuration: segmentDuration)
     }
 
-    init(fileDirectory: URL, segmentDuration: Double = TSWriter.defaultSegmentDuration) {
+    public init(fileDirectory: URL, segmentDuration: Double = TSWriter.defaultSegmentDuration) {
         self.fileDirectory = fileDirectory
 
         super.init(segmentDuration: segmentDuration)
