@@ -34,6 +34,9 @@ public class TSWriter: Running {
     var segmentDuration: Double = TSWriter.defaultSegmentDuration
     let lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.TSWriter.lock")
 
+    var canWriteVideo = false
+    var canWriteAudio = false
+
     private(set) var PAT: ProgramAssociationSpecific = {
         let PAT: ProgramAssociationSpecific = .init()
         PAT.programs = [1: TSWriter.defaultPMTPID]
@@ -77,6 +80,16 @@ public class TSWriter: Running {
         guard isRunning.value else {
             return
         }
+
+        if expectedMedias.contains(.video) {
+            canWriteVideo = true
+            canWriteAudio = false
+        } else {
+            canWriteVideo = false
+            canWriteAudio = true
+        }
+
+
         isRunning.mutate { $0 = true }
     }
 
@@ -95,6 +108,10 @@ public class TSWriter: Running {
         videoTimestamp = .invalid
         audioTimestamp = .invalid
         PCRTimestamp = .invalid
+
+        canWriteVideo = false
+        canWriteAudio = false
+
         isRunning.mutate { $0 = false }
     }
 
@@ -107,12 +124,18 @@ public class TSWriter: Running {
         switch PID {
         case TSWriter.defaultAudioPID:
             guard audioTimestamp == .invalid else { break }
+            if !canWriteAudio {
+                return
+            }
             audioTimestamp = presentationTimeStamp
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
             }
         case TSWriter.defaultVideoPID:
             guard videoTimestamp == .invalid else { break }
+            if !canWriteVideo {
+                return
+            }
             videoTimestamp = presentationTimeStamp
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
@@ -156,6 +179,10 @@ public class TSWriter: Running {
         }
 
         write(bytes)
+
+        if PID == TSWriter.defaultVideoPID && !canWriteAudio {
+            canWriteAudio = true
+        }
     }
 
     func rotateFileHandle(_ timestamp: CMTime) {
