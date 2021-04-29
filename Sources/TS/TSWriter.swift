@@ -34,6 +34,8 @@ public class TSWriter: Running {
     var segmentDuration: Double = TSWriter.defaultSegmentDuration
     let lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.TSWriter.lock")
 
+    var videoInitialized = false
+
     private(set) var PAT: ProgramAssociationSpecific = {
         let PAT: ProgramAssociationSpecific = .init()
         PAT.programs = [1: TSWriter.defaultPMTPID]
@@ -108,19 +110,18 @@ public class TSWriter: Running {
 
         switch PID {
         case TSWriter.defaultAudioPID:
-            guard audioTimestamp == .invalid else { break }
-            logger.info("Initializing audio")
+            guard (videoInitialized || expectedMedias.contains(.video)), audioTimestamp == .invalid else { break }
             audioTimestamp = presentationTimeStamp
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
             }
         case TSWriter.defaultVideoPID:
             guard videoTimestamp == .invalid else { break }
-            logger.info("initializing video")
             videoTimestamp = presentationTimeStamp
             if PCRPID == PID {
                 PCRTimestamp = presentationTimeStamp
             }
+            videoInitialized = true
         default:
             break
         }
