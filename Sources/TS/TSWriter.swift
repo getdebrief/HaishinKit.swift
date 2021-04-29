@@ -278,7 +278,12 @@ extension TSWriter: VideoEncoderDelegate {
     }
 }
 
-class TSFileWriter: TSWriter {
+public protocol TSFileWriterDelegate: AnyObject {
+    func didStartWritingToFile(at: URL)
+    func didFinishWritingToFile(at: URL)
+}
+
+public class TSFileWriter: TSWriter {
     static let defaultSegmentCount: Int = 3
     static let defaultSegmentMaxCount: Int = 12
 
@@ -287,6 +292,28 @@ class TSFileWriter: TSWriter {
     private var currentFileHandle: FileHandle?
     private var currentFileURL: URL?
     private var sequence: Int = 0
+
+    private var fileDirectory: URL
+
+    public weak var fileDelegate: TSFileWriterDelegate?
+
+    override init(segmentDuration: Double = TSWriter.defaultSegmentDuration) {
+        #if os(OSX)
+        let bundleIdentifier: String? = Bundle.main.bundleIdentifier
+        let temp: String = bundleIdentifier == nil ? NSTemporaryDirectory() : NSTemporaryDirectory() + bundleIdentifier! + "/"
+        #else
+        let temp: String = NSTemporaryDirectory()
+        #endif
+        self.fileDirectory = URL(fileURLWithPath: temp, isDirectory: true)
+
+        super.init(segmentDuration: segmentDuration)
+    }
+
+    init(fileDirectory: URL, segmentDuration: Double = TSWriter.defaultSegmentDuration) {
+        self.fileDirectory = fileDirectory
+
+        super.init(segmentDuration: segmentDuration)
+    }
 
     var playlist: String {
         var m3u8 = M3U()
@@ -315,26 +342,20 @@ class TSFileWriter: TSWriter {
         }
         let fileManager = FileManager.default
 
-        #if os(OSX)
-        let bundleIdentifier: String? = Bundle.main.bundleIdentifier
-        let temp: String = bundleIdentifier == nil ? NSTemporaryDirectory() : NSTemporaryDirectory() + bundleIdentifier! + "/"
-        #else
-        let temp: String = NSTemporaryDirectory()
-        #endif
-
-        if !fileManager.fileExists(atPath: temp) {
+        if !fileManager.fileExists(atPath: self.fileDirectory.path) {
             do {
-                try fileManager.createDirectory(atPath: temp, withIntermediateDirectories: false, attributes: nil)
+                try fileManager.createDirectory(atPath: self.fileDirectory.path, withIntermediateDirectories: false, attributes: nil)
             } catch let error as NSError {
                 logger.warn("\(error)")
             }
         }
 
         let filename: String = Int(timestamp.seconds).description + ".ts"
-        let url = URL(fileURLWithPath: temp + filename)
+        let url = URL(fileURLWithPath: filename, relativeTo: self.fileDirectory)
 
         if let currentFileURL: URL = currentFileURL {
             files.append(M3UMediaInfo(url: currentFileURL, duration: duration))
+            self.fileDelegate?.didFinishWritingToFile(at: currentFileURL)
             sequence += 1
         }
 
@@ -360,6 +381,10 @@ class TSFileWriter: TSWriter {
         currentFileHandle?.closeFile()
         currentFileHandle = try? FileHandle(forWritingTo: url)
 
+        if let newFileURL: URL = currentFileURL {
+            self.fileDelegate?.didStartWritingToFile(at: newFileURL)
+        }
+
         writeProgram()
         rotatedTimestamp = timestamp
     }
@@ -374,7 +399,7 @@ class TSFileWriter: TSWriter {
         super.write(data)
     }
 
-    override func stopRunning() {
+    public override func stopRunning() {
         guard !isRunning.value else {
             return
         }
