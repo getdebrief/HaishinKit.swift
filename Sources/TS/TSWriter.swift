@@ -52,7 +52,7 @@ public class TSWriter: Running {
     }
     private var videoTimestamp: CMTime = .invalid
     private var audioTimestamp: CMTime = .invalid
-    private var PCRTimestamp: CMTime = .invalid
+    private var PCRTimestamp: CMTime = .zero
     private var canWriteFor: Bool {
         guard expectedMedias.isEmpty else {
             return true
