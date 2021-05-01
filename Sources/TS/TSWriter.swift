@@ -343,7 +343,7 @@ public class TSFileWriter: TSWriter {
         super.startRunning()
     }
 
-    var playlist: String {
+    public var playlist: String {
         var m3u8 = M3U()
         m3u8.targetDuration = segmentDuration
         if sequence <= segmentMaxCount {
