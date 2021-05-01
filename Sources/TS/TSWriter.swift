@@ -289,7 +289,7 @@ extension TSWriter: VideoEncoderDelegate {
 
 public protocol TSFileWriterDelegate: AnyObject {
     func didStartWritingToFile(at: URL)
-    func didFinishWritingToFile(at: URL, duration: Double)
+    func didFinishWritingToFile(at: URL?, duration: Double, isFinalSegment: Bool)
 }
 
 public class TSFileWriter: TSWriter {
@@ -301,6 +301,8 @@ public class TSFileWriter: TSWriter {
     private var currentFileHandle: FileHandle?
     private var currentFileURL: URL?
     private var sequence: Int = 0
+
+    private var lastTimestamp: CMTime = .invalid
 
     private var fileDirectory: URL
 
@@ -326,6 +328,21 @@ public class TSFileWriter: TSWriter {
         super.init(segmentDuration: segmentDuration)
     }
 
+    public override func startRunning() {
+        if isRunning.value {
+            return
+        }
+
+        lastTimestamp = .invalid
+        rotatedTimestamp = .invalid
+        files.removeAll()
+        currentFileHandle = nil
+        currentFileURL = nil
+        sequence = 0
+
+        super.startRunning()
+    }
+
     var playlist: String {
         var m3u8 = M3U()
         m3u8.targetDuration = segmentDuration
@@ -348,6 +365,7 @@ public class TSFileWriter: TSWriter {
 
     override func rotateFileHandle(_ timestamp: CMTime) {
         let duration: Double = timestamp.seconds - rotatedTimestamp.seconds
+        lastTimestamp = timestamp
         if duration <= segmentDuration {
             return
         }
@@ -366,7 +384,7 @@ public class TSFileWriter: TSWriter {
 
         if let currentFileURL: URL = currentFileURL {
             files.append(M3UMediaInfo(url: currentFileURL, duration: duration))
-            self.fileDelegate?.didFinishWritingToFile(at: currentFileURL, duration: duration)
+            self.fileDelegate?.didFinishWritingToFile(at: currentFileURL, duration: duration, isFinalSegment: false)
             sequence += 1
         }
 
@@ -410,13 +428,23 @@ public class TSFileWriter: TSWriter {
         super.write(data)
     }
 
-    public override func stopRunning() {
+    public func stopRunning(keepFiles: Bool) {
         guard !isRunning.value else {
             return
         }
+        var duration = 0.0
+        if lastTimestamp != .invalid && rotatedTimestamp != .invalid {
+            duration = lastTimestamp.seconds - rotatedTimestamp.seconds
+        }
+        if currentFileURL != nil {
+            files.append(M3UMediaInfo(url: currentFileURL!, duration: duration))
+        }
+        fileDelegate?.didFinishWritingToFile(at: currentFileURL, duration: duration, isFinalSegment: true)
         currentFileURL = nil
         currentFileHandle = nil
-        removeFiles()
+        if !keepFiles {
+            removeFiles()
+        }
         super.stopRunning()
     }
 
