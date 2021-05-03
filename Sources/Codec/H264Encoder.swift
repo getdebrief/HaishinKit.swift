@@ -265,7 +265,11 @@ public final class H264Encoder {
         guard let session: VTCompressionSession = session else {
             return
         }
-        print("In encodeImageBuffer; presTimestamp: \(presentationTimeStamp)")
+
+        if presentationTimeStamp == .zero && lastImageBuffer == nil {
+            // If this is the first frame and the timesatmp is 0, skip it.
+            return
+        }
         var flags: VTEncodeInfoFlags = []
         VTCompressionSessionEncodeFrame(
             session,
