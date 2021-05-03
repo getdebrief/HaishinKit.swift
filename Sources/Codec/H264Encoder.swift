@@ -265,6 +265,7 @@ public final class H264Encoder {
         guard let session: VTCompressionSession = session else {
             return
         }
+        print("In encodeImageBuffer; presTimestamp: \(presentationTimeStamp)")
         var flags: VTEncodeInfoFlags = []
         VTCompressionSessionEncodeFrame(
             session,

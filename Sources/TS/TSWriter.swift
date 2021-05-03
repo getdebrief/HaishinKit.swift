@@ -137,8 +137,6 @@ public class TSWriter: Running {
 
         PES.streamID = streamID
 
-        logger.info("Pres timestamp: \(presentationTimeStamp) and decode: \(decodeTimeStamp) and videoTimestamp: \(videoTimestamp)")
-
         let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
