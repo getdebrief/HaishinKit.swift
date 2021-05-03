@@ -142,6 +142,7 @@ public class TSWriter: Running {
 
 
         if PCRTimestamp == .invalid || videoTimestamp == .invalid {
+            audioTimestamp = .invalid
             return
         }
 
