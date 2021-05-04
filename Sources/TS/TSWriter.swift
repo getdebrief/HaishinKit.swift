@@ -34,8 +34,7 @@ public class TSWriter: Running {
     var segmentDuration: Double = TSWriter.defaultSegmentDuration
     let lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.TSWriter.lock")
 
-    var firstVideoTs: CMTime = .zero
-    var firstAudioTs: CMTime = .zero
+    var bufferedSamples: [BufferedSampleBuffer] = []
 
     let writeLock = NSLock()
 
@@ -105,16 +104,53 @@ public class TSWriter: Running {
         isRunning.mutate { $0 = false }
     }
 
+    struct BufferedSampleBuffer {
+        let pid: UInt16
+        let streamID: UInt8
+        var bytes: [UInt8]
+        let pts: CMTime
+        let dts: CMTime
+        let randomAccessIndicator: Bool
+
+        init(pid: UInt16, streamID: UInt8, bytes: UnsafePointer<UInt8>?, count: UInt32, pts: CMTime, dts: CMTime, rai: Bool) {
+            self.pid = pid
+            self.streamID = streamID
+            if bytes != nil {
+                self.bytes = [UInt8](repeating: 0, count: Int(count))
+                memcpy(&self.bytes, bytes, Int(count))
+            } else {
+                self.bytes = []
+            }
+            self.pts = pts
+            self.dts = dts
+            self.randomAccessIndicator = rai
+        }
+    }
+
     // swiftlint:disable function_parameter_count
     final func writeSampleBuffer(_ PID: UInt16, streamID: UInt8, bytes: UnsafePointer<UInt8>?, count: UInt32, presentationTimeStamp: CMTime, decodeTimeStamp: CMTime, randomAccessIndicator: Bool) {
-        guard canWriteFor else {
-            return
-        }
 
         self.writeLock.lock()
         defer {
             writeLock.unlock()
         }
+        let didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: presentationTimeStamp, decodeTimeStamp: decodeTimeStamp, randomAccessIndicator: randomAccessIndicator)
+
+        if didWrite && self.bufferedSamples.count > 0 {
+            // We need to write all buffered samples with timestamps at or after the written video
+            // timestamp
+            for bufferedSample in self.bufferedSamples {
+                let _ = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
+            }
+            self.bufferedSamples.removeAll()
+        }
+    }
+
+    private func writeSampleBufferImpl(_ PID: UInt16, streamID: UInt8, bytes: UnsafePointer<UInt8>?, count: UInt32, presentationTimeStamp: CMTime, decodeTimeStamp: CMTime, randomAccessIndicator: Bool) -> Bool {
+        guard canWriteFor else {
+            return false
+        }
+
         switch PID {
         case TSWriter.defaultAudioPID:
             guard audioTimestamp == .invalid || audioTimestamp == .zero else { break }
@@ -133,6 +169,16 @@ public class TSWriter: Running {
             break
         }
 
+        if videoTimestamp == .invalid {
+            audioTimestamp = .invalid
+            self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
+            return false
+        }
+
+        if presentationTimeStamp < videoTimestamp {
+            return false
+        }
+
         guard var PES = PacketizedElementaryStream.create(
             bytes,
             count: count,
@@ -141,7 +187,7 @@ public class TSWriter: Running {
             timestamp: PID == TSWriter.defaultVideoPID ? videoTimestamp : audioTimestamp,
             config: streamID == 192 ? audioConfig : videoConfig,
             randomAccessIndicator: randomAccessIndicator) else {
-            return
+            return false
         }
 
         PES.streamID = streamID
@@ -149,11 +195,6 @@ public class TSWriter: Running {
         let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
-
-        if PCRTimestamp == .invalid || videoTimestamp == .invalid {
-            audioTimestamp = .invalid
-            return
-        }
 
         rotateFileHandle(timestamp)
 
@@ -175,6 +216,8 @@ public class TSWriter: Running {
         }
 
         write(bytes)
+
+        return true
     }
 
     func rotateFileHandle(_ timestamp: CMTime) {
@@ -245,12 +288,6 @@ extension TSWriter: AudioCodecDelegate {
         guard !data.isEmpty && 0 < data[0].mDataByteSize else {
             return
         }
-        if firstAudioTs == .zero {
-            firstAudioTs = presentationTimeStamp
-            logger.info("First audio TS: \(firstAudioTs.seconds)")
-        } else {
-            logger.info("Subsequent audio TS: \(presentationTimeStamp.seconds)")
-        }
         writeSampleBuffer(
             TSWriter.defaultAudioPID,
             streamID: 192,
@@ -282,20 +319,6 @@ extension TSWriter: VideoEncoderDelegate {
     public func sampleOutput(video sampleBuffer: CMSampleBuffer) {
         guard let dataBuffer = sampleBuffer.dataBuffer else {
             return
-        }
-        if firstVideoTs == .zero {
-            firstVideoTs = sampleBuffer.presentationTimeStamp
-            if #available(OSX 10.15, *) {
-                logger.info("First video TS: \(sampleBuffer.presentationTimeStamp.seconds) and output preso: \(sampleBuffer.outputPresentationTimeStamp.seconds)")
-            } else {
-                // Fallback on earlier versions
-            }
-        } else {
-            if #available(OSX 10.15, *) {
-                logger.info("Subsequent video TS: \(sampleBuffer.presentationTimeStamp.seconds) and output preso: \(sampleBuffer.outputPresentationTimeStamp.seconds)")
-            } else {
-                // Fallback on earlier versions
-            }
         }
         var length: Int = 0
         var buffer: UnsafeMutablePointer<Int8>?
