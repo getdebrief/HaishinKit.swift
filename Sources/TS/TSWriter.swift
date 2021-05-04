@@ -284,9 +284,9 @@ extension TSWriter: VideoEncoderDelegate {
             return
         }
         if firstVideoTs == .zero {
-            firstAudioTs = sampleBuffer.presentationTimeStamp
+            firstVideoTs = sampleBuffer.presentationTimeStamp
             if #available(OSX 10.15, *) {
-                logger.info("First audio TS: \(sampleBuffer.presentationTimeStamp.seconds) and output preso: \(sampleBuffer.outputPresentationTimeStamp.seconds)")
+                logger.info("First video TS: \(sampleBuffer.presentationTimeStamp.seconds) and output preso: \(sampleBuffer.outputPresentationTimeStamp.seconds)")
             } else {
                 // Fallback on earlier versions
             }
