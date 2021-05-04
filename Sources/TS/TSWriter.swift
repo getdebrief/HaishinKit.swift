@@ -34,6 +34,9 @@ public class TSWriter: Running {
     var segmentDuration: Double = TSWriter.defaultSegmentDuration
     let lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.TSWriter.lock")
 
+    var firstVideoTs: CMTime = .zero
+    var firstAudioTs: CMTime = .zero
+
     let writeLock = NSLock()
 
     private(set) var PAT: ProgramAssociationSpecific = {
@@ -242,6 +245,12 @@ extension TSWriter: AudioCodecDelegate {
         guard !data.isEmpty && 0 < data[0].mDataByteSize else {
             return
         }
+        if firstAudioTs == .zero {
+            firstAudioTs = presentationTimeStamp
+            logger.info("First audio TS: \(firstAudioTs.seconds)")
+        } else {
+            logger.info("Subsequent audio TS: \(presentationTimeStamp.seconds)")
+        }
         writeSampleBuffer(
             TSWriter.defaultAudioPID,
             streamID: 192,
@@ -273,6 +282,20 @@ extension TSWriter: VideoEncoderDelegate {
     public func sampleOutput(video sampleBuffer: CMSampleBuffer) {
         guard let dataBuffer = sampleBuffer.dataBuffer else {
             return
+        }
+        if firstVideoTs == .zero {
+            firstAudioTs = sampleBuffer.presentationTimeStamp
+            if #available(OSX 10.15, *) {
+                logger.info("First audio TS: \(sampleBuffer.presentationTimeStamp.seconds) and output preso: \(sampleBuffer.outputPresentationTimeStamp.seconds)")
+            } else {
+                // Fallback on earlier versions
+            }
+        } else {
+            if #available(OSX 10.15, *) {
+                logger.info("Subsequent video TS: \(sampleBuffer.presentationTimeStamp.seconds) and output preso: \(sampleBuffer.outputPresentationTimeStamp.seconds)")
+            } else {
+                // Fallback on earlier versions
+            }
         }
         var length: Int = 0
         var buffer: UnsafeMutablePointer<Int8>?
