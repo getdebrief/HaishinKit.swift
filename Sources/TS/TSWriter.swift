@@ -34,6 +34,8 @@ public class TSWriter: Running {
     var segmentDuration: Double = TSWriter.defaultSegmentDuration
     let lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.TSWriter.lock")
 
+    let writeLock = NSLock()
+
     private(set) var PAT: ProgramAssociationSpecific = {
         let PAT: ProgramAssociationSpecific = .init()
         PAT.programs = [1: TSWriter.defaultPMTPID]
@@ -106,68 +108,70 @@ public class TSWriter: Running {
             return
         }
 
-        lockQueue.async { [self] in
+        self.writeLock.lock()
+        defer {
+            writeLock.unlock()
+        }
+        switch PID {
+        case TSWriter.defaultAudioPID:
+            guard audioTimestamp == .invalid || audioTimestamp == .zero else { break }
+            audioTimestamp = presentationTimeStamp
+            if PCRPID == PID {
+                PCRTimestamp = presentationTimeStamp
+            }
+        case TSWriter.defaultVideoPID:
+            guard videoTimestamp == .invalid || videoTimestamp == .zero else { break }
+            videoTimestamp = presentationTimeStamp
+            // NOTE: Set the audio timestamp back to invalid so it will set it properly to now.
+            if PCRPID == PID {
+                PCRTimestamp = presentationTimeStamp
+            }
+        default:
+            break
+        }
+
+        guard var PES = PacketizedElementaryStream.create(
+            bytes,
+            count: count,
+            presentationTimeStamp: presentationTimeStamp,
+            decodeTimeStamp: decodeTimeStamp,
+            timestamp: PID == TSWriter.defaultVideoPID ? videoTimestamp : audioTimestamp,
+            config: streamID == 192 ? audioConfig : videoConfig,
+            randomAccessIndicator: randomAccessIndicator) else {
+            return
+        }
+
+        PES.streamID = streamID
+
+        let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
+        let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
+
+
+        if PCRTimestamp == .invalid || videoTimestamp == .invalid {
+            audioTimestamp = .invalid
+            return
+        }
+
+        rotateFileHandle(timestamp)
+
+        packets[0].adaptationField?.randomAccessIndicator = randomAccessIndicator
+
+        var bytes = Data()
+        for var packet in packets {
             switch PID {
             case TSWriter.defaultAudioPID:
-                guard audioTimestamp == .invalid || audioTimestamp == .zero else { break }
-                audioTimestamp = presentationTimeStamp
-                if PCRPID == PID {
-                    PCRTimestamp = presentationTimeStamp
-                }
+                packet.continuityCounter = audioContinuityCounter
+                audioContinuityCounter = (audioContinuityCounter + 1) & 0x0f
             case TSWriter.defaultVideoPID:
-                guard videoTimestamp == .invalid || videoTimestamp == .zero else { break }
-                videoTimestamp = presentationTimeStamp
-                // NOTE: Set the audio timestamp back to invalid so it will set it properly to now.
-                if PCRPID == PID {
-                    PCRTimestamp = presentationTimeStamp
-                }
+                packet.continuityCounter = videoContinuityCounter
+                videoContinuityCounter = (videoContinuityCounter + 1) & 0x0f
             default:
                 break
             }
-
-            guard var PES = PacketizedElementaryStream.create(
-                bytes,
-                count: count,
-                presentationTimeStamp: presentationTimeStamp,
-                decodeTimeStamp: decodeTimeStamp,
-                timestamp: PID == TSWriter.defaultVideoPID ? videoTimestamp : audioTimestamp,
-                config: streamID == 192 ? audioConfig : videoConfig,
-                randomAccessIndicator: randomAccessIndicator) else {
-                return
-            }
-
-            PES.streamID = streamID
-
-            let timestamp = decodeTimeStamp == .invalid ? presentationTimeStamp : decodeTimeStamp
-            let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
-
-
-            if PCRTimestamp == .invalid || videoTimestamp == .invalid {
-                audioTimestamp = .invalid
-                return
-            }
-
-            rotateFileHandle(timestamp)
-
-            packets[0].adaptationField?.randomAccessIndicator = randomAccessIndicator
-
-            var bytes = Data()
-            for var packet in packets {
-                switch PID {
-                case TSWriter.defaultAudioPID:
-                    packet.continuityCounter = audioContinuityCounter
-                    audioContinuityCounter = (audioContinuityCounter + 1) & 0x0f
-                case TSWriter.defaultVideoPID:
-                    packet.continuityCounter = videoContinuityCounter
-                    videoContinuityCounter = (videoContinuityCounter + 1) & 0x0f
-                default:
-                    break
-                }
-                bytes.append(packet.data)
-            }
-
-            write(bytes)
+            bytes.append(packet.data)
         }
+
+        write(bytes)
     }
 
     func rotateFileHandle(_ timestamp: CMTime) {
