@@ -445,8 +445,6 @@ extension VideoIOComponent {
             duration: sampleBuffer.duration
         )
 
-        print("Encoded sample buffer at time \(sampleBuffer.presentationTimeStamp)")
-
         mixer?.recorder.appendPixelBuffer(imageBuffer ?? buffer, withPresentationTime: sampleBuffer.presentationTimeStamp)
     }
 }
