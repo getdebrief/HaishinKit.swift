@@ -267,7 +267,7 @@ public final class H264Encoder {
         }
 
         if presentationTimeStamp == .zero && lastImageBuffer == nil {
-            // If this is the first frame and the timesatmp is 0, skip it.
+            // If this is the first frame and the timestamp is 0, skip it.
             return
         }
         var flags: VTEncodeInfoFlags = []

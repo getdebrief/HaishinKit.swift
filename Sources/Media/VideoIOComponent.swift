@@ -250,7 +250,7 @@ final class VideoIOComponent: IOComponent {
         get {
             if _output == nil {
                 _output = AVCaptureVideoDataOutput()
-                _output?.alwaysDiscardsLateVideoFrames = true
+                _output?.alwaysDiscardsLateVideoFrames = false
                 _output?.videoSettings = videoSettings as? [String: Any]
             }
             return _output!
@@ -444,6 +444,8 @@ extension VideoIOComponent {
             presentationTimeStamp: sampleBuffer.presentationTimeStamp,
             duration: sampleBuffer.duration
         )
+
+        print("Encoded sample buffer at time \(sampleBuffer.presentationTimeStamp)")
 
         mixer?.recorder.appendPixelBuffer(imageBuffer ?? buffer, withPresentationTime: sampleBuffer.presentationTimeStamp)
     }
