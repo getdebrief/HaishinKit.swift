@@ -6,9 +6,13 @@ import AVFoundation
     }
 #endif
 
-protocol AVMixerDelegate: AnyObject {
+public protocol AVMixerDelegate: AnyObject {
     func didOutputAudio(_ buffer: AVAudioPCMBuffer, presentationTimeStamp: CMTime)
     func didOutputVideo(_ buffer: CMSampleBuffer)
+}
+
+public protocol AVMixerPTSDelegate: AnyObject {
+    func shouldSkipVideoFrame(_ buffer: CMSampleBuffer) -> Bool
 }
 
 public class AVMixer {
@@ -18,6 +22,11 @@ public class AVMixer {
     public static let defaultVideoSettings: [NSString: AnyObject] = [
         kCVPixelBufferPixelFormatTypeKey: NSNumber(value: kCVPixelFormatType_32BGRA)
     ]
+
+    var firstAudioPTS: CMTime = .invalid
+    var firstVideoPTS: CMTime = .invalid
+    var lastAudioPTS: CMTime = .invalid
+    var lastVideoPTS: CMTime = .invalid
 
     #if os(iOS) || os(macOS)
     public enum Option: String, KeyPathRepresentable, CaseIterable {
@@ -119,7 +128,8 @@ public class AVMixer {
         }
     }
 
-    weak var delegate: AVMixerDelegate?
+    public weak var delegate: AVMixerDelegate?
+    public weak var ptsDelegate: AVMixerPTSDelegate?
 
     private var _recorder: AVRecorder?
     /// The recorder instance.

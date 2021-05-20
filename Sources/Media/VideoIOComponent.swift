@@ -406,6 +406,12 @@ final class VideoIOComponent: IOComponent {
 
 extension VideoIOComponent {
     func encodeSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
+
+        // Should we drop the frame? Is it late?
+        if self.mixer?.ptsDelegate?.shouldSkipVideoFrame(sampleBuffer) == true {
+            return
+        }
+
         guard let buffer: CVImageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             return
         }
