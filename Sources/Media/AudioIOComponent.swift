@@ -208,6 +208,11 @@ extension AudioIOComponent: AudioCodecDelegate {
             return
         }
 
+        // Should we drop the frame? Is it late?
+        if self.mixer?.ptsDelegate?.shouldSkipAudioFrame(buffer, presentationTimeStamp: presentationTimeStamp) == true {
+            return
+        }
+
         if let queue = mixer?.videoIO.queue, queue.isPaused {
             queue.isPaused = false
         }

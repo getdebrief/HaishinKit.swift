@@ -13,6 +13,7 @@ public protocol AVMixerDelegate: AnyObject {
 
 public protocol AVMixerPTSDelegate: AnyObject {
     func shouldSkipVideoFrame(_ buffer: CMSampleBuffer) -> Bool
+    func shouldSkipAudioFrame(_ buffer: AVAudioPCMBuffer, presentationTimeStamp: CMTime) -> Bool
 }
 
 public class AVMixer {
