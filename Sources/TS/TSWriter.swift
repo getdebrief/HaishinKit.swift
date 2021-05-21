@@ -140,6 +140,7 @@ public class TSWriter: Running {
             // We need to write all buffered samples with timestamps at or after the written video
             // timestamp
             for bufferedSample in self.bufferedSamples {
+                print("Writing buffered sample. pts: \(bufferedSample.pts)")
                 let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
             }
             self.bufferedSamples.removeAll()
@@ -169,7 +170,7 @@ public class TSWriter: Running {
             break
         }
 
-        if false && videoTimestamp == .invalid {
+        if videoTimestamp == .invalid {
             audioTimestamp = .invalid
             self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
             return false
@@ -335,8 +336,7 @@ extension TSWriter: VideoEncoderDelegate {
             bytes: UnsafeRawPointer(bytes).bindMemory(to: UInt8.self, capacity: length),
             count: UInt32(length),
             presentationTimeStamp: sampleBuffer.presentationTimeStamp,
-            // This is super dangerous, I think, because this always has to be monotonic.
-            decodeTimeStamp: sampleBuffer.presentationTimeStamp,
+            decodeTimeStamp: sampleBuffer.decodeTimeStamp,
             randomAccessIndicator: !sampleBuffer.isNotSync
         )
     }
