@@ -140,7 +140,7 @@ public class TSWriter: Running {
             // We need to write all buffered samples with timestamps at or after the written video
             // timestamp
             for bufferedSample in self.bufferedSamples {
-                print("Writing buffered sample. pts: \(bufferedSample.pts)")
+                print("Writing buffered sample. pts: \(bufferedSample.pts) and video timestamp is \(videoTimestamp)")
                 let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
             }
             self.bufferedSamples.removeAll()
