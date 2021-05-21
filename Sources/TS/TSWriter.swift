@@ -335,7 +335,8 @@ extension TSWriter: VideoEncoderDelegate {
             bytes: UnsafeRawPointer(bytes).bindMemory(to: UInt8.self, capacity: length),
             count: UInt32(length),
             presentationTimeStamp: sampleBuffer.presentationTimeStamp,
-            decodeTimeStamp: sampleBuffer.decodeTimeStamp,
+            // This is super dangerous, I think, because this always has to be monotonic.
+            decodeTimeStamp: sampleBuffer.presentationTimeStamp,
             randomAccessIndicator: !sampleBuffer.isNotSync
         )
     }
