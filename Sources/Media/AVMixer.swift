@@ -161,6 +161,10 @@ public class AVMixer {
         dispose()
     }
 
+    public func prime() {
+        self.videoIO.prime()
+    }
+
     public init() {
         settings.observer = self
     }

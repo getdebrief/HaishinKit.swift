@@ -82,6 +82,10 @@ final class VideoIOComponent: IOComponent {
         }
     }
 
+    func prime() {
+        self.encoder.prime()
+    }
+
     #if os(iOS) || os(macOS)
     var fps: Float64 = AVMixer.defaultFPS {
         didSet {

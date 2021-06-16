@@ -170,6 +170,10 @@ public final class H264Encoder {
     private var invalidateSession = true
     private var lastImageBuffer: CVImageBuffer?
 
+    func prime() {
+        guard let sess = session else { return }
+    }
+
     // @see: https://developer.apple.com/library/mac/releasenotes/General/APIDiffsMacOSX10_8/VideoToolbox.html
     private var properties: [NSString: NSObject] {
         let isBaseline: Bool = profileLevel.contains("Baseline")
@@ -237,7 +241,6 @@ public final class H264Encoder {
                 }
                 invalidateSession = false
                 status = session.setProperties(properties)
-                print("about to prepare to encode")
                 status = session.prepareToEncodeFrame()
                 guard status == noErr else {
                     logger.error("setup failed VTCompressionSessionPrepareToEncodeFrames. Size = \(width)x\(height)")
