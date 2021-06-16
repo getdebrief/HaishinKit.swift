@@ -170,13 +170,13 @@ public class TSWriter: Running {
             break
         }
 
-        if videoTimestamp == .invalid {
+        if false && videoTimestamp == .invalid {
             audioTimestamp = .invalid
             self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
             return false
         }
 
-        if presentationTimeStamp < videoTimestamp {
+        if false && presentationTimeStamp < videoTimestamp {
             audioTimestamp = .invalid
             return false
         }
