@@ -138,7 +138,6 @@ public class TSWriter: Running {
         let didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: presentationTimeStamp, decodeTimeStamp: decodeTimeStamp, randomAccessIndicator: randomAccessIndicator)
 
         if didWrite && PID == TSWriter.defaultVideoPID {
-            print("Setting last video timestamp to \(presentationTimeStamp)")
             lastVideoTimestamp = presentationTimeStamp
         }
 
@@ -147,15 +146,12 @@ public class TSWriter: Running {
             // timestamp
             var newBufferedSamples: [BufferedSampleBuffer] = []
             for bufferedSample in self.bufferedSamples {
-                print("Last video timestamp: \(lastVideoTimestamp) and buffered pts: \(bufferedSample.pts)")
                 if lastVideoTimestamp != .invalid && bufferedSample.pts <= lastVideoTimestamp {
                     let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
                     if !didWriteBuf {
-                        print("appending to new buffered samples 1")
                         newBufferedSamples.append(bufferedSample)
                     }
                 } else {
-                    print ("appending to new buffered samples 2")
                     newBufferedSamples.append(bufferedSample)
                 }
             }
