@@ -213,7 +213,9 @@ public class TSWriter: Running {
         let packets: [TSPacket] = split(PID, PES: PES, timestamp: timestamp)
 
 
-        rotateFileHandle(timestamp)
+        if PID == TSWriter.defaultVideoPID {
+            rotateFileHandle(timestamp)
+        }
 
         packets[0].adaptationField?.randomAccessIndicator = randomAccessIndicator
 
