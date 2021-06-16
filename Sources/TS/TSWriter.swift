@@ -137,7 +137,7 @@ public class TSWriter: Running {
         }
         let didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: presentationTimeStamp, decodeTimeStamp: decodeTimeStamp, randomAccessIndicator: randomAccessIndicator)
 
-        if didWrite && streamID == TSWriter.defaultVideoPID {
+        if didWrite && PID == TSWriter.defaultVideoPID {
             print("Setting last video timestamp to \(presentationTimeStamp)")
             lastVideoTimestamp = presentationTimeStamp
         }
