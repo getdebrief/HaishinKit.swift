@@ -237,6 +237,7 @@ public final class H264Encoder {
                 }
                 invalidateSession = false
                 status = session.setProperties(properties)
+                print("about to prepare to encode")
                 status = session.prepareToEncodeFrame()
                 guard status == noErr else {
                     logger.error("setup failed VTCompressionSessionPrepareToEncodeFrames. Size = \(width)x\(height)")

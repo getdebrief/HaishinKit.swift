@@ -101,6 +101,7 @@ public class TSWriter: Running {
         videoTimestamp = .invalid
         audioTimestamp = .invalid
         PCRTimestamp = .invalid
+        lastVideoTimestamp = .invalid
 
         isRunning.mutate { $0 = false }
     }
@@ -150,6 +151,10 @@ public class TSWriter: Running {
             // timestamp
             var newBufferedSamples: [BufferedSampleBuffer] = []
             for bufferedSample in self.bufferedSamples {
+                if videoTimestamp != .invalid && bufferedSample.pts < videoTimestamp {
+                    // This case is the audio sample came in before the first video timestamp
+                    continue
+                }
                 if lastVideoTimestamp != .invalid && bufferedSample.pts <= lastVideoTimestamp {
                     let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
                     if !didWriteBuf {
@@ -191,7 +196,7 @@ public class TSWriter: Running {
             return false
         }
 
-        if false && presentationTimeStamp < videoTimestamp {
+        if presentationTimeStamp < videoTimestamp {
             audioTimestamp = .invalid
             return false
         }
@@ -339,6 +344,7 @@ extension TSWriter: VideoEncoderDelegate {
         guard let dataBuffer = sampleBuffer.dataBuffer else {
             return
         }
+
         var length: Int = 0
         var buffer: UnsafeMutablePointer<Int8>?
         guard CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &length, dataPointerOut: &buffer) == noErr else {
