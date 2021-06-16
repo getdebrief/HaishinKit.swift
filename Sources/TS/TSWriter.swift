@@ -435,10 +435,10 @@ public class TSFileWriter: TSWriter {
         return m3u8.description
     }
 
-    override func rotateFileHandle(_ timestamp: CMTime) {
+    override func rotateFileHandle(_ timestamp: CMTime, randomAccessIndicator: Bool) {
         let duration: Double = timestamp.seconds - rotatedTimestamp.seconds
         lastTimestamp = timestamp
-        if duration <= segmentDuration {
+        if duration <= segmentDuration || !randomAccessIndicator {
             return
         }
         let fileManager = FileManager.default
