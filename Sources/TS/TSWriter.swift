@@ -135,13 +135,17 @@ public class TSWriter: Running {
         defer {
             writeLock.unlock()
         }
-        let didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: presentationTimeStamp, decodeTimeStamp: decodeTimeStamp, randomAccessIndicator: randomAccessIndicator)
-
+        var didWrite = false
+        if PID == TSWriter.defaultAudioPID && self.bufferedSamples.count > 0 {
+            self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
+        } else {
+            didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: presentationTimeStamp, decodeTimeStamp: decodeTimeStamp, randomAccessIndicator: randomAccessIndicator)
+        }
         if didWrite && PID == TSWriter.defaultVideoPID {
             lastVideoTimestamp = presentationTimeStamp
         }
 
-        if didWrite && self.bufferedSamples.count > 0 {
+        if (didWrite && self.bufferedSamples.count > 0) || (!didWrite && PID == TSWriter.defaultAudioPID && lastVideoTimestamp != .invalid) {
             // We need to write all buffered samples with timestamps at or after the written video
             // timestamp
             var newBufferedSamples: [BufferedSampleBuffer] = []
