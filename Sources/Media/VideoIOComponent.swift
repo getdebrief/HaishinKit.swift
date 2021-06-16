@@ -250,7 +250,7 @@ final class VideoIOComponent: IOComponent {
         get {
             if _output == nil {
                 _output = AVCaptureVideoDataOutput()
-                _output?.alwaysDiscardsLateVideoFrames = false
+                _output?.alwaysDiscardsLateVideoFrames = true
                 _output?.videoSettings = videoSettings as? [String: Any]
             }
             return _output!
