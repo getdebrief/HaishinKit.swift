@@ -145,7 +145,7 @@ public class TSWriter: Running {
             lastVideoTimestamp = presentationTimeStamp
         }
 
-        if (didWrite && self.bufferedSamples.count > 0) || (!didWrite && PID == TSWriter.defaultAudioPID && lastVideoTimestamp != .invalid) {
+        if (didWrite && self.bufferedSamples.count > 0) || (self.bufferedSamples.count > 0 && !didWrite && PID == TSWriter.defaultAudioPID && lastVideoTimestamp != .invalid) {
             // We need to write all buffered samples with timestamps at or after the written video
             // timestamp
             var newBufferedSamples: [BufferedSampleBuffer] = []
