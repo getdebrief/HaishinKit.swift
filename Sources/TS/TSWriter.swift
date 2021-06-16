@@ -56,6 +56,7 @@ public class TSWriter: Running {
     }
     private var videoTimestamp: CMTime = .invalid
     private var audioTimestamp: CMTime = .invalid
+    private var lastVideoTimestamp: CMTime = .invalid
     private var PCRTimestamp: CMTime = .zero
     private var canWriteFor: Bool {
         guard expectedMedias.isEmpty else {
@@ -136,14 +137,27 @@ public class TSWriter: Running {
         }
         let didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: presentationTimeStamp, decodeTimeStamp: decodeTimeStamp, randomAccessIndicator: randomAccessIndicator)
 
+        if didWrite && streamID == TSWriter.defaultVideoPID {
+            lastVideoTimestamp = presentationTimeStamp
+        }
+
         if didWrite && self.bufferedSamples.count > 0 {
             // We need to write all buffered samples with timestamps at or after the written video
             // timestamp
+            var newBufferedSamples: [BufferedSampleBuffer] = []
             for bufferedSample in self.bufferedSamples {
-                print("Writing buffered sample. pts: \(bufferedSample.pts) and video timestamp is \(videoTimestamp)")
-                let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
+                if lastVideoTimestamp != .invalid && bufferedSample.pts <= lastVideoTimestamp {
+                    let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
+                    if !didWriteBuf {
+                        print("appending to new buffered samples")
+                        newBufferedSamples.append(bufferedSample)
+                    }
+                } else {
+                    print ("appending to new buffered samples")
+                    newBufferedSamples.append(bufferedSample)
+                }
             }
-            self.bufferedSamples.removeAll()
+            bufferedSamples = newBufferedSamples
         }
     }
 
@@ -170,7 +184,7 @@ public class TSWriter: Running {
             break
         }
 
-        if false && videoTimestamp == .invalid {
+        if videoTimestamp == .invalid || presentationTimeStamp < videoTimestamp {
             audioTimestamp = .invalid
             self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
             return false
