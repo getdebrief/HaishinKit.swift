@@ -214,7 +214,7 @@ public class TSWriter: Running {
 
 
         if PID == TSWriter.defaultVideoPID {
-            rotateFileHandle(timestamp)
+            rotateFileHandle(timestamp, randomAccessIndicator: randomAccessIndicator)
         }
 
         packets[0].adaptationField?.randomAccessIndicator = randomAccessIndicator
@@ -239,9 +239,9 @@ public class TSWriter: Running {
         return true
     }
 
-    func rotateFileHandle(_ timestamp: CMTime) {
+    func rotateFileHandle(_ timestamp: CMTime, randomAccessIndicator: Bool) {
         let duration: Double = timestamp.seconds - rotatedTimestamp.seconds
-        if duration <= segmentDuration {
+        if duration <= segmentDuration || !randomAccessIndicator {
             return
         }
         writeProgram()
