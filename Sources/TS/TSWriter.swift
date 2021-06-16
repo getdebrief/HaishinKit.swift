@@ -27,6 +27,9 @@ public class TSWriter: Running {
     /// The exptected medias = [.video, .audio].
     public var expectedMedias: Set<AVMediaType> = []
 
+    var videoSegmentLength = CMTime(seconds: 1, preferredTimescale: 30)
+    var numVideoFrames = 0
+
     var audioContinuityCounter: UInt8 = 0
     var videoContinuityCounter: UInt8 = 0
     var PCRPID: UInt16 = TSWriter.defaultVideoPID
@@ -140,7 +143,13 @@ public class TSWriter: Running {
         if PID == TSWriter.defaultAudioPID && self.bufferedSamples.count > 0 {
             self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
         } else {
-            didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: presentationTimeStamp, decodeTimeStamp: decodeTimeStamp, randomAccessIndicator: randomAccessIndicator)
+            var pts = presentationTimeStamp
+            var dts = decodeTimeStamp
+            if PID == Self.defaultVideoPID {
+                pts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
+                dts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
+            }
+            didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: pts, decodeTimeStamp: dts, randomAccessIndicator: randomAccessIndicator)
         }
         if didWrite && PID == TSWriter.defaultVideoPID {
             lastVideoTimestamp = presentationTimeStamp
