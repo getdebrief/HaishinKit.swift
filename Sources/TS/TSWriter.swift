@@ -187,7 +187,6 @@ public class TSWriter: Running {
         }
 
         if videoTimestamp == .invalid || presentationTimeStamp < videoTimestamp {
-            audioTimestamp = .invalid
             self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
             return false
         }
