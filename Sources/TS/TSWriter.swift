@@ -83,8 +83,11 @@ public class TSWriter: Running {
 
     public func startRunning() {
         guard isRunning.value else {
+            print("Call to super start running failed because is running")
             return
         }
+
+        print("Updating isrunning to true")
 
         isRunning.mutate { $0 = true }
     }
@@ -420,6 +423,7 @@ public class TSFileWriter: TSWriter {
 
     public override func startRunning() {
         if isRunning.value {
+            print("Call to start running failed because already is running")
             return
         }
 
