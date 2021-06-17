@@ -350,7 +350,7 @@ extension TSWriter: VideoEncoderDelegate {
             return
         }
 
-        print("Sample output called with ts: sampleBuffer.presentationTimeStamp")
+        print("Sample output called with ts: \(sampleBuffer.presentationTimeStamp)")
 
         var length: Int = 0
         var buffer: UnsafeMutablePointer<Int8>?

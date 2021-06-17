@@ -215,6 +215,7 @@ public final class H264Encoder {
                 }
             return
         }
+        print("In callback from encoder")
         let encoder: H264Encoder = Unmanaged<H264Encoder>.fromOpaque(refcon).takeUnretainedValue()
         encoder.formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
         encoder.delegate?.sampleOutput(video: sampleBuffer)
