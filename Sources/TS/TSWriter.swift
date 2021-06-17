@@ -82,7 +82,7 @@ public class TSWriter: Running {
     }
 
     public func startRunning() {
-        guard isRunning.value else {
+        guard !isRunning.value else {
             print("Call to super start running failed because is running")
             return
         }
@@ -93,7 +93,7 @@ public class TSWriter: Running {
     }
 
     public func stopRunning() {
-        guard !isRunning.value else {
+        guard isRunning.value else {
             return
         }
         audioContinuityCounter = 0
@@ -523,7 +523,7 @@ public class TSFileWriter: TSWriter {
     }
 
     public func stopRunning(keepFiles: Bool) {
-        guard !isRunning.value else {
+        guard isRunning.value else {
             return
         }
         var duration = 0.0
