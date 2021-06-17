@@ -148,6 +148,7 @@ public class TSWriter: Running {
             if PID == Self.defaultVideoPID {
                 pts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
                 dts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
+                print("setting pts to \(pts)")
             }
             didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: pts, decodeTimeStamp: dts, randomAccessIndicator: randomAccessIndicator)
         }
