@@ -145,10 +145,10 @@ public class TSWriter: Running {
         } else {
             var pts = presentationTimeStamp
             var dts = decodeTimeStamp
-            if PID == Self.defaultVideoPID {
+            if PID == Self.defaultVideoPID && lastVideoTimestamp != .invalid {
                 pts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
                 dts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
-                print("setting pts to \(pts)")
+                print("setting pts to \(pts); lastvideoTimestamp = \(lastVideoTimestamp) and segment length: \(videoSegmentLength)")
             }
             didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: pts, decodeTimeStamp: dts, randomAccessIndicator: randomAccessIndicator)
         }
