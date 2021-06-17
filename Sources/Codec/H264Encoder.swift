@@ -80,6 +80,8 @@ public final class H264Encoder {
     }
     public private(set) var isRunning: Atomic<Bool> = .init(false)
 
+    var forceKeyFrameNextFrame: Bool = true
+
     var muted = false
     var scalingMode: ScalingMode = H264Encoder.defaultScalingMode {
         didSet {
@@ -278,12 +280,16 @@ public final class H264Encoder {
             return
         }
         var flags: VTEncodeInfoFlags = []
+        var frameProperties: CFDictionary? = nil;
+        if (forceKeyFrameNextFrame) {
+            frameProperties = [kVTEncodeFrameOptionKey_ForceKeyFrame : kCFBooleanTrue ] as CFDictionary
+        }
         VTCompressionSessionEncodeFrame(
             session,
             imageBuffer: muted ? lastImageBuffer ?? imageBuffer : imageBuffer,
             presentationTimeStamp: presentationTimeStamp,
             duration: duration,
-            frameProperties: nil,
+            frameProperties: frameProperties,
             sourceFrameRefcon: nil,
             infoFlagsOut: &flags
         )

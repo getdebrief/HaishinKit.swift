@@ -108,6 +108,15 @@ public class AVMixer {
         }
     }
 
+    public var forceKeyFrameNextFrame: Bool {
+        get {
+            self.videoIO.forceKeyFrameNextFrame
+        }
+        set {
+            self.videoIO.forceKeyFrameNextFrame = true
+        }
+    }
+
     private var _session: AVCaptureSession?
     public var session: AVCaptureSession {
         get {

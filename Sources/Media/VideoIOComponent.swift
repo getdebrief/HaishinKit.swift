@@ -82,6 +82,15 @@ final class VideoIOComponent: IOComponent {
         }
     }
 
+    var forceKeyFrameNextFrame: Bool {
+        get {
+            self.encoder.forceKeyFrameNextFrame
+        }
+        set {
+            self.encoder.forceKeyFrameNextFrame = true
+        }
+    }
+
     func prime() {
         self.encoder.prime()
     }
