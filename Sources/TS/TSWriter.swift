@@ -350,6 +350,8 @@ extension TSWriter: VideoEncoderDelegate {
             return
         }
 
+        print("Sample output called with ts: sampleBuffer.presentationTimeStamp")
+
         var length: Int = 0
         var buffer: UnsafeMutablePointer<Int8>?
         guard CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &length, dataPointerOut: &buffer) == noErr else {

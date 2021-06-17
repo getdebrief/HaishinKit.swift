@@ -261,6 +261,7 @@ public final class H264Encoder {
     }
 
     func encodeImageBuffer(_ imageBuffer: CVImageBuffer, presentationTimeStamp: CMTime, duration: CMTime) {
+        print("encode image buffer called with pts: \(presentationTimeStamp)")
         guard isRunning.value && locked == 0 else {
             return
         }
