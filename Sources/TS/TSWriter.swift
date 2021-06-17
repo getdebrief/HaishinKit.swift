@@ -148,7 +148,7 @@ public class TSWriter: Running {
             writeLock.unlock()
         }
         var didWrite = false
-        if PID == TSWriter.defaultAudioPID && self.bufferedSamples.count > 0 {
+        if false && PID == TSWriter.defaultAudioPID && presentationTimeStamp >= videoTimestamp {
             self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
         } else {
             let pts = presentationTimeStamp
@@ -159,26 +159,26 @@ public class TSWriter: Running {
             lastVideoTimestamp = presentationTimeStamp
         }
 
-        if (didWrite && self.bufferedSamples.count > 0) || (self.bufferedSamples.count > 0 && !didWrite && PID == TSWriter.defaultAudioPID && lastVideoTimestamp != .invalid) {
-            // We need to write all buffered samples with timestamps at or after the written video
-            // timestamp
-            var newBufferedSamples: [BufferedSampleBuffer] = []
-            for bufferedSample in self.bufferedSamples {
-                if videoTimestamp != .invalid && bufferedSample.pts < videoTimestamp {
-                    // This case is the audio sample came in before the first video timestamp
-                    continue
-                }
-                if lastVideoTimestamp != .invalid && bufferedSample.pts <= lastVideoTimestamp {
-                    let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
-                    if !didWriteBuf {
-                        newBufferedSamples.append(bufferedSample)
-                    }
-                } else {
-                    newBufferedSamples.append(bufferedSample)
-                }
-            }
-            bufferedSamples = newBufferedSamples
-        }
+//        if (didWrite && self.bufferedSamples.count > 0) || (self.bufferedSamples.count > 0 && !didWrite && PID == TSWriter.defaultAudioPID && lastVideoTimestamp != .invalid) {
+//            // We need to write all buffered samples with timestamps at or after the written video
+//            // timestamp
+//            var newBufferedSamples: [BufferedSampleBuffer] = []
+//            for bufferedSample in self.bufferedSamples {
+//                if videoTimestamp != .invalid && bufferedSample.pts < videoTimestamp {
+//                    // This case is the audio sample came in before the first video timestamp
+//                    continue
+//                }
+//                if lastVideoTimestamp != .invalid && bufferedSample.pts <= lastVideoTimestamp {
+//                    let didWriteBuf = self.writeSampleBufferImpl(bufferedSample.pid, streamID: bufferedSample.streamID, bytes: bufferedSample.bytes, count: UInt32(bufferedSample.bytes.count), presentationTimeStamp: bufferedSample.pts, decodeTimeStamp: bufferedSample.dts, randomAccessIndicator: bufferedSample.randomAccessIndicator)
+//                    if !didWriteBuf {
+//                        newBufferedSamples.append(bufferedSample)
+//                    }
+//                } else {
+//                    newBufferedSamples.append(bufferedSample)
+//                }
+//            }
+//            bufferedSamples = newBufferedSamples
+//        }
     }
 
     private func writeSampleBufferImpl(_ PID: UInt16, streamID: UInt8, bytes: UnsafePointer<UInt8>?, count: UInt32, presentationTimeStamp: CMTime, decodeTimeStamp: CMTime, randomAccessIndicator: Bool) -> Bool {
