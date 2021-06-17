@@ -143,13 +143,8 @@ public class TSWriter: Running {
         if PID == TSWriter.defaultAudioPID && self.bufferedSamples.count > 0 {
             self.bufferedSamples.append(BufferedSampleBuffer(pid: PID, streamID: streamID, bytes: bytes, count: count, pts: presentationTimeStamp, dts: decodeTimeStamp, rai: randomAccessIndicator))
         } else {
-            var pts = presentationTimeStamp
-            var dts = decodeTimeStamp
-            if PID == Self.defaultVideoPID && lastVideoTimestamp != .invalid {
-                pts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
-                dts = CMTimeAdd(lastVideoTimestamp, videoSegmentLength)
-                print("setting pts to \(pts); lastvideoTimestamp = \(lastVideoTimestamp) and segment length: \(videoSegmentLength)")
-            }
+            let pts = presentationTimeStamp
+            let dts = decodeTimeStamp
             didWrite = self.writeSampleBufferImpl(PID, streamID: streamID, bytes: bytes, count: count, presentationTimeStamp: pts, decodeTimeStamp: dts, randomAccessIndicator: randomAccessIndicator)
         }
         if didWrite && PID == TSWriter.defaultVideoPID {
