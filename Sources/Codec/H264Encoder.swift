@@ -283,6 +283,7 @@ public final class H264Encoder {
         var frameProperties: CFDictionary? = nil;
         if (forceKeyFrameNextFrame) {
             frameProperties = [kVTEncodeFrameOptionKey_ForceKeyFrame : kCFBooleanTrue ] as CFDictionary
+            forceKeyFrameNextFrame = false
         }
         VTCompressionSessionEncodeFrame(
             session,
