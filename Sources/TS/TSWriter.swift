@@ -83,11 +83,9 @@ public class TSWriter: Running {
 
     public func startRunning() {
         guard !isRunning.value else {
-            print("Call to super start running failed because is running")
             return
         }
 
-        print("Updating isrunning to true")
 
         isRunning.mutate { $0 = true }
     }
@@ -139,7 +137,6 @@ public class TSWriter: Running {
     final func writeSampleBuffer(_ PID: UInt16, streamID: UInt8, bytes: UnsafePointer<UInt8>?, count: UInt32, presentationTimeStamp: CMTime, decodeTimeStamp: CMTime, randomAccessIndicator: Bool) {
 
         if !isRunning.value {
-            print("Returning early")
             return
         }
 
@@ -358,8 +355,6 @@ extension TSWriter: VideoEncoderDelegate {
             return
         }
 
-        print("Sample output called with ts: \(sampleBuffer.presentationTimeStamp)")
-
         var length: Int = 0
         var buffer: UnsafeMutablePointer<Int8>?
         guard CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &length, dataPointerOut: &buffer) == noErr else {
@@ -423,7 +418,6 @@ public class TSFileWriter: TSWriter {
 
     public override func startRunning() {
         if isRunning.value {
-            print("Call to start running failed because already is running")
             return
         }
 

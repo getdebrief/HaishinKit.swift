@@ -217,7 +217,6 @@ public final class H264Encoder {
                 }
             return
         }
-        print("In callback from encoder")
         let encoder: H264Encoder = Unmanaged<H264Encoder>.fromOpaque(refcon).takeUnretainedValue()
         encoder.formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
         encoder.delegate?.sampleOutput(video: sampleBuffer)
@@ -245,7 +244,6 @@ public final class H264Encoder {
                 invalidateSession = false
                 status = session.setProperties(properties)
                 status = session.prepareToEncodeFrame()
-                print("Done preparing")
                 guard status == noErr else {
                     logger.error("setup failed VTCompressionSessionPrepareToEncodeFrames. Size = \(width)x\(height)")
                     return nil
@@ -264,7 +262,6 @@ public final class H264Encoder {
     }
 
     func encodeImageBuffer(_ imageBuffer: CVImageBuffer, presentationTimeStamp: CMTime, duration: CMTime) {
-        print("encode image buffer called with pts: \(presentationTimeStamp)")
         guard isRunning.value && locked == 0 else {
             return
         }
